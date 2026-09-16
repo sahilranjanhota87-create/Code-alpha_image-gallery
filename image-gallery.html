@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact Sheet — Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --charcoal: #1b1b1d;
+    --panel: #242426;
+    --panel-hi: #2c2c2e;
+    --wall: #edeae3;
+    --wall-dim: #c9c5bb;
+    --brass: #b8935a;
+    --brass-dim: #8f6f42;
+    --teal: #3a5a6c;
+    --muted: #8a8a8d;
+    --line: rgba(237,234,227,0.09);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0; padding:0;
+    background: var(--charcoal);
+    color: var(--wall);
+    font-family: 'Work Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a{ color: inherit; }
+
+  /* ---------- Header ---------- */
+  header{
+    padding: 64px 6vw 40px;
+    border-bottom: 1px solid var(--line);
+  }
+  .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    color: var(--brass);
+    text-transform: uppercase;
+    margin: 0 0 14px;
+  }
+  h1{
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+  header p{
+    color: var(--muted);
+    max-width: 46ch;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* ---------- Filter tabs ---------- */
+  .filters{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 28px 6vw 0;
+  }
+  .filter-btn{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--wall-dim);
+    padding: 9px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: border-color .25s ease, color .25s ease, background .25s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .filter-btn .idx{ color: var(--brass-dim); transition: color .25s ease; }
+  .filter-btn:hover{
+    border-color: var(--brass-dim);
+    color: var(--wall);
+  }
+  .filter-btn.active{
+    background: var(--brass);
+    border-color: var(--brass);
+    color: var(--charcoal);
+  }
+  .filter-btn.active .idx{ color: var(--charcoal); }
+
+  /* ---------- Gallery grid ---------- */
+  .gallery{
+    padding: 36px 6vw 80px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 190px;
+    gap: 14px;
+  }
+  .tile{
+    position: relative;
+    grid-row: span 1;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    opacity: 0;
+    transform: translateY(14px);
+    animation: rise .6s ease forwards;
+  }
+  .tile.tall{ grid-row: span 2; }
+  .tile img{
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .5s cubic-bezier(.2,.8,.2,1), filter .5s ease;
+    filter: grayscale(0.15) contrast(1.02);
+  }
+  .tile:hover img{
+    transform: scale(1.06);
+    filter: grayscale(0) contrast(1.05);
+  }
+  .tile .plaque{
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    padding: 10px 14px 12px;
+    background: linear-gradient(180deg, transparent, rgba(0,0,0,0.82) 60%);
+    transform: translateY(100%);
+    transition: transform .35s cubic-bezier(.2,.8,.2,1);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .tile:hover .plaque{ transform: translateY(0); }
+  .plaque .cap{
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+  .plaque .cap span{
+    display:block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--brass);
+    margin-top: 3px;
+    letter-spacing: 0.05em;
+  }
+  .frame-no{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--wall-dim);
+    border: 1px solid rgba(237,234,227,0.3);
+    padding: 2px 6px;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  @keyframes rise{
+    to{ opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- Lightbox ---------- */
+  .lightbox{
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,11,0.94);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+  }
+  .lightbox.open{ opacity: 1; pointer-events: auto; }
+
+  .perf-row{
+    position: absolute;
+    left: 0; right: 0;
+    height: 22px;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+  }
+  .perf-row.top{ top: 0; }
+  .perf-row.bottom{ bottom: 0; }
+  .perf-row span{
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    background: var(--charcoal);
+    border: 1px solid rgba(237,234,227,0.15);
+  }
+
+  .lb-stage{
+    position: relative;
+    max-width: min(1100px, 86vw);
+    max-height: 80vh;
+    margin-top: 10px;
+  }
+  .lb-stage img{
+    max-width: 100%;
+    max-height: 80vh;
+    display: block;
+    border-radius: 2px;
+    opacity: 0;
+    transform: scale(.98);
+    transition: opacity .35s ease, transform .35s ease;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+  }
+  .lb-stage img.show{ opacity: 1; transform: scale(1); }
+
+  .lb-meta{
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-top: 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--wall-dim);
+    letter-spacing: 0.04em;
+  }
+  .lb-meta .title{
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    color: var(--wall);
+  }
+  .lb-meta .counter .idx-current{ color: var(--brass); }
+
+  .lb-close, .lb-nav{
+    position: absolute;
+    background: rgba(27,27,29,0.7);
+    border: 1px solid var(--line);
+    color: var(--wall);
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background .2s ease, border-color .2s ease, transform .2s ease;
+    font-size: 18px;
+    user-select: none;
+  }
+  .lb-close:hover, .lb-nav:hover{
+    background: var(--brass);
+    border-color: var(--brass);
+    color: var(--charcoal);
+  }
+  .lb-close{ top: 34px; right: max(3vw, 20px); }
+  .lb-nav.prev{ left: max(2vw, 10px); top: 50%; transform: translateY(-50%); }
+  .lb-nav.next{ right: max(2vw, 10px); top: 50%; transform: translateY(-50%); }
+  .lb-nav.prev:hover{ transform: translateY(-50%) translateX(-3px); }
+  .lb-nav.next:hover{ transform: translateY(-50%) translateX(3px); }
+
+  footer{
+    padding: 20px 6vw 40px;
+    color: var(--muted);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.05em;
+    border-top: 1px solid var(--line);
+  }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 1000px){
+    .gallery{ grid-template-columns: repeat(3, 1fr); grid-auto-rows: 160px; }
+  }
+  @media (max-width: 720px){
+    .gallery{ grid-template-columns: repeat(2, 1fr); grid-auto-rows: 150px; gap: 10px; }
+    header{ padding: 44px 5vw 28px; }
+    .filters{ padding: 22px 5vw 0; }
+    .lb-nav{ width: 38px; height: 38px; font-size: 15px; }
+    .lb-close{ top: 18px; }
+  }
+  @media (max-width: 460px){
+    .gallery{ grid-template-columns: repeat(2, 1fr); grid-auto-rows: 130px; }
+    .tile.tall{ grid-row: span 1; }
+    .plaque .cap{ font-size: 12px; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation: none !important; transition: none !important; }
+  }
+
+  button:focus-visible, .tile:focus-visible{
+    outline: 2px solid var(--brass);
+    outline-offset: 2px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Roll 04 &middot; 12 Frames</p>
+  <h1>Contact Sheet</h1>
+  <p>A small selection pulled from the negatives. Filter by subject, or browse the full roll — click any frame to open it full size.</p>
+</header>
+
+<nav class="filters" id="filters"></nav>
+
+<main class="gallery" id="gallery"></main>
+
+<div class="lightbox" id="lightbox">
+  <div class="perf-row top" id="perfTop"></div>
+  <div class="perf-row bottom" id="perfBottom"></div>
+
+  <div class="lb-nav prev" id="lbPrev" aria-label="Previous image">&#8592;</div>
+  <div class="lb-nav next" id="lbNext" aria-label="Next image">&#8594;</div>
+  <div class="lb-close" id="lbClose" aria-label="Close">&#10005;</div>
+
+  <div class="lb-stage">
+    <img id="lbImage" src="" alt="">
+    <div class="lb-meta">
+      <span class="title" id="lbTitle"></span>
+      <span class="counter">Frame <span class="idx-current" id="lbCurrent"></span> / <span id="lbTotal"></span></span>
+    </div>
+  </div>
+</div>
+
+<footer>Contact Sheet — a small gallery demo. Use ← → to navigate, Esc to close.</footer>
+
+<script>
+  const photos = [
+    { id: 1015, cat: "nature",       title: "River Bend",        tall: true  },
+    { id: 1016, cat: "nature",       title: "Alpine Ridge",      tall: false },
+    { id: 1018, cat: "nature",       title: "Pine Hollow",       tall: false },
+    { id: 1021, cat: "nature",       title: "Lakeside Fog",      tall: false },
+    { id: 164,  cat: "architecture", title: "Concrete Spine",    tall: false },
+    { id: 180,  cat: "architecture", title: "Glass Atrium",      tall: true  },
+    { id: 197,  cat: "architecture", title: "Stairwell Study",   tall: false },
+    { id: 239,  cat: "architecture", title: "Facade No.9",       tall: false },
+    { id: 1027, cat: "portrait",     title: "Quiet Corner",      tall: false },
+    { id: 342,  cat: "portrait",     title: "Half Light",        tall: true  },
+    { id: 1011, cat: "street",       title: "Crosswalk",         tall: false },
+    { id: 1025, cat: "street",       title: "Late Delivery",     tall: false },
+  ];
+
+  const categories = [
+    { key: "all",          label: "All" },
+    { key: "nature",       label: "Nature" },
+    { key: "architecture", label: "Architecture" },
+    { key: "portrait",     label: "Portrait" },
+    { key: "street",       label: "Street" },
+  ];
+
+  const imgUrl = (id, w, h) => `https://picsum.photos/id/${id}/${w}/${h}`;
+
+  const filtersEl = document.getElementById('filters');
+  const galleryEl = document.getElementById('gallery');
+
+  let activeCat = "all";
+  let currentList = photos.slice();
+  let currentIndex = 0;
+
+  function renderFilters(){
+    filtersEl.innerHTML = "";
+    categories.forEach((c, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn' + (c.key === activeCat ? ' active' : '');
+      btn.innerHTML = `<span class="idx">${String(i+1).padStart(2,'0')}</span> ${c.label}`;
+      btn.addEventListener('click', () => {
+        activeCat = c.key;
+        renderFilters();
+        renderGallery();
+      });
+      filtersEl.appendChild(btn);
+    });
+  }
+
+  function renderGallery(){
+    galleryEl.innerHTML = "";
+    currentList = activeCat === "all" ? photos.slice() : photos.filter(p => p.cat === activeCat);
+
+    currentList.forEach((p, i) => {
+      const tile = document.createElement('div');
+      tile.className = 'tile' + (p.tall ? ' tall' : '');
+      tile.style.animationDelay = (i * 0.04) + 's';
+      tile.tabIndex = 0;
+      tile.setAttribute('role', 'button');
+      tile.setAttribute('aria-label', `Open ${p.title}`);
+
+      tile.innerHTML = `
+        <img src="${imgUrl(p.id, 500, p.tall ? 700 : 400)}" alt="${p.title}" loading="lazy">
+        <div class="plaque">
+          <div class="cap">${p.title}<span>${p.cat.toUpperCase()}</span></div>
+          <div class="frame-no">${String(i+1).padStart(2,'0')}</div>
+        </div>
+      `;
+
+      const open = () => openLightbox(i);
+      tile.addEventListener('click', open);
+      tile.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+
+      galleryEl.appendChild(tile);
+    });
+  }
+
+  /* ---------- Lightbox logic ---------- */
+  const lightbox = document.getElementById('lightbox');
+  const lbImage = document.getElementById('lbImage');
+  const lbTitle = document.getElementById('lbTitle');
+  const lbCurrent = document.getElementById('lbCurrent');
+  const lbTotal = document.getElementById('lbTotal');
+  const lbPrev = document.getElementById('lbPrev');
+  const lbNext = document.getElementById('lbNext');
+  const lbClose = document.getElementById('lbClose');
+
+  function buildPerforations(){
+    [document.getElementById('perfTop'), document.getElementById('perfBottom')].forEach(row => {
+      row.innerHTML = "";
+      for(let i=0;i<24;i++){
+        const s = document.createElement('span');
+        row.appendChild(s);
+      }
+    });
+  }
+  buildPerforations();
+
+  function showImage(){
+    const p = currentList[currentIndex];
+    lbImage.classList.remove('show');
+    lbTotal.textContent = String(currentList.length).padStart(2,'0');
+    lbCurrent.textContent = String(currentIndex+1).padStart(2,'0');
+    lbTitle.textContent = p.title;
+
+    const nextSrc = imgUrl(p.id, 1400, 1000);
+    const preload = new Image();
+    preload.onload = () => {
+      lbImage.src = nextSrc;
+      lbImage.alt = p.title;
+      requestAnimationFrame(() => lbImage.classList.add('show'));
+    };
+    preload.src = nextSrc;
+  }
+
+  function openLightbox(index){
+    currentIndex = index;
+    showImage();
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox(){
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function step(delta){
+    currentIndex = (currentIndex + delta + currentList.length) % currentList.length;
+    showImage();
+  }
+
+  lbClose.addEventListener('click', closeLightbox);
+  lbPrev.addEventListener('click', () => step(-1));
+  lbNext.addEventListener('click', () => step(1));
+  lightbox.addEventListener('click', (e) => { if(e.target === lightbox) closeLightbox(); });
+
+  document.addEventListener('keydown', (e) => {
+    if(!lightbox.classList.contains('open')) return;
+    if(e.key === 'Escape') closeLightbox();
+    if(e.key === 'ArrowLeft') step(-1);
+    if(e.key === 'ArrowRight') step(1);
+  });
+
+  // basic swipe support
+  let touchStartX = null;
+  lightbox.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  lightbox.addEventListener('touchend', (e) => {
+    if(touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if(Math.abs(dx) > 40) step(dx > 0 ? -1 : 1);
+    touchStartX = null;
+  });
+
+  renderFilters();
+  renderGallery();
+</script>
+
+</body>
+</html>
